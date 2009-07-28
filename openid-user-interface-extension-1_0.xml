@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type='text/xsl' href='http://xml.resource.org/authoring/rfc2629.xslt' ?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+
+<rfc category="info" ipr="full3978" docName="openid-ui-1_0.xml">
+
+  <?rfc toc="yes" ?>
+  <?rfc tocdepth="3" ?>
+  <?rfc symrefs="yes" ?>
+  <?rfc sortrefs="yes"?>
+  <?rfc strict="yes" ?>
+  <?rfc iprnotified="no" ?>
+  <?rfc private="Implementers' Draft" ?>
+
+  <front>
+    <title abbrev="OpenID UI 1.0">OpenID User Interface Extension 1.0 - DRAFT 0.4</title>
+
+    <author initials="A" surname="Tom" fullname="Allen Tom">
+      <organization>Yahoo!</organization>
+      <address>
+        <email>atom@yahoo-inc.com</email>
+      </address>
+    </author>
+
+    <author initials="B" surname="de Medeiros" fullname="Breno de Medeiros">
+      <organization>Google</organization>
+      <address>
+        <email>breno@google.com</email>
+      </address>
+    </author>
+
+    <date day="18" month="May" year="2009"/>
+    <abstract>
+      <t>
+	This specification defines a mechanism to support OpenID user interfaces 
+	optimized for different environments and languages.
+      </t>
+    </abstract>
+  </front>
+  <middle>
+    
+    <section anchor="conv" title="Notation and Conventions">
+          <t>The keywords MUST, MUST NOT, REQUIRED, SHALL, 
+	    SHALL NOT, SHOULD, SHOULD NOT, RECOMMENDED, MAY, 
+	    and OPTIONAL in this document are to be interpreted as 
+	    described in <xref target="RFC2119"/>. 
+           </t>
+	  <t>
+            Unless otherwise noted, this specification is written as a direct
+            continuation of <xref target="OpenID 2.0" />, inheriting the definitions and
+            guidelines set by it.
+	  </t>
+    </section>
+    <section title="Overview">
+      <t>
+	OpenID traditionally required the Relying Party to redirect the entire browser 
+	window to the OpenID Provider for the user to authenticate before redirecting 
+	the browser back to the Relying Party. It is believed that the User Experience (UX) 
+	could be significantly improved if the authentication flow occurred within a separate
+	popup window, making the experience less disruptive to the user. 
+      </t>
+      <t>
+	Although it is possible for Relying Parties to open a popup window for the user to
+	authenticate at	the OpenID Provider using the Provider's default user interface, 
+	the overall user experience can be optimized if the OP was aware that its UI was running 
+	within a popup. For instance, an OP may want to resize the popup browser window when using
+	the popup interface, but would probably not want to resize the full browser 
+	window when using the default redirect interface.
+	Another optimization is that the OP can close the popup, rather than 
+	return a negative assertion if the user chooses to cancel the authentication request.
+      </t>
+      <t>
+	This extension also adds support for Relying Parties to indicate the user's language
+	preference to the OP, potentially making the transition from the RP to the OP less disruptive
+	to the user.
+	</t>
+    </section>
+    <section title="Extension Namespace">
+	  <t>
+	    All OpenID 2.0 messages that contain a UI Extension element MUST 
+	    contain the following extension namespace declaration, as specified in the 
+	    Extensions section of <xref target="OpenID 2.0"/>.
+	    </t>
+	<figure>
+	  <artwork>
+ openid.ns.&lt;alias&gt;=http://specs.openid.net/extensions/ui/1.0
+	  </artwork>
+	</figure>
+
+	<t>
+	  The actual extension namespace alias should be determined on a per-message basis
+	  by the party composing the messages, in such a manner as to avoid conflicts between 
+	  multiple extensions. For the purposes of this document, the extension namespace used
+	  for all examples is "ui". 
+	</t>
+    </section>
+
+    <section title="Language Preference">
+      <t>
+	When requesting OpenID authentication using the checkid_setup mode, the Relying Party MAY send the 
+	OP a hint regarding the user's preferred language by sending the following parameters:
+      </t>
+      <t>
+	<list style="hanging"> 
+	  <t hangText="openid.ns.ui">
+	    REQUIRED. Value: "http://specs.openid.net/extensions/ui/1.0"
+	  </t>
+	  <t hangText="openid.ui.lang">
+	    REQUIRED. The user's preferred languages as a <xref target="BCP 47" /> language priority list, 
+	    represented as a comma-separated list of BCP 47 basic language ranges in descending priority order. 
+	    For instance, the value "fr-CA,fr-FR,en-CA" represents the preference for French spoken in Canada, 
+	    French spoken in France, followed by English spoken in Canada. 
+	  </t>
+	</list>
+      </t>
+      
+      <t>
+	The language preference hint SHOULD take precedence over the Accept-Language
+	HTTP header sent by the user's browser, and SHOULD take precedence over the language 
+	preference inferred by the user's IP address. 
+      </t>
+
+    </section>
+
+    <section title="Requesting Authentication in a Popup">
+      <t>
+	The Relying Party SHOULD first request authentication using the checkid_immedidate mode if the Relying Party 
+	has reason to believe that user had previously authenticated at the Relying Party and can determine
+	the user's OpenID Provider.
+      </t>
+      <t>
+	When requesting OpenID authentication using the checkid_setup mode, the Relying Party MUST send
+	the following parameters:
+      </t>
+      <t>
+	  <list style="hanging"> 
+	    <t hangText="openid.ns.ui">
+	      REQUIRED. Value: "http://specs.openid.net/extensions/ui/1.0"
+	    </t>
+	    <t hangText="openid.ui.mode">
+	      REQUIRED. Value: "popup".
+	      New modes may be defined in future versions of this extension.
+	    </t>
+	  </list>
+      </t>
+      <t>
+	The RP SHOULD create the popup to be 450 pixels wide and 500 pixels tall. 
+	The popup MUST have the address bar displayed, and MUST be in a standalone browser
+	window. The contents of the popup MUST NOT be framed by the RP. 
+      </t>
+      <t>
+	The RP SHOULD open the popup centered above the main browser window, and SHOULD dim
+	the contents of the parent window while the popup is active. The RP SHOULD ensure 
+	that the user is not surprised by the appearance of the popup, and understands
+	how to interact with it.
+	
+      </t>
+      <t>
+	To keep the user popup user experience consistent, it is RECOMMENDED that
+	the OP does not resize the popup window unless the OP requires additional 
+	space to show special features that are not usually displayed as part of the 
+	default popup user experience.
+      </t>
+      <t>
+	The OP MAY close the popup without returning a response to the RP. 
+	Closing the popup without sending a response should be interpreted as a 
+	negative assertion.
+      </t>
+      <t>
+      The response to an authentication request in a popup is unchanged from 
+      <xref target="OpenID 2.0" />.
+      Relying Parties detecting that the popup was closed without receiving an authentication response
+      SHOULD interpret the close event to be a negative assertion.
+      </t>
+
+      <section title="Authentication Response in a Fragment">
+	<t>
+	  The user experience can be optimized by returning the authentication response parameters in 
+	  the fragment portion of the Relying Party's return_to URL, allowing the content of the return_to 
+	  URL to be returned from the browser's cache, if already present.  To use this 
+	  technique, the Relying Party MUST include the fragment delimiter (the "#" character) in the return_to 
+	  URL in the authentication request. If the fragment delimiter character is present in the return_to URL, 
+	  the OpenID Provider SHOULD return the response parameters in the fragment portion of the URL. If the
+	  return_to URL already contains a question mark "?", the first response parameter MUST be prefixed 
+	  with an ampersand "&", otherwise the first response parameter MUST be prefixed with a question mark "?".
+	</t>
+      </section>
+    </section>
+    <section title="Discovery">
+	<t>
+	  OpenID Providers supporting the User Interface Extension SHOULD advertise their support of the
+	  Extension using OpenID Discovery as defined in Section 7.3 of <xref target="OpenID 2.0" />.
+	</t>
+	<t>
+	  OpenID Providers supporting the language preference functionality SHOULD define
+	  http://specs.openid.net/extensions/ui/1.0/lang-pref as a &lt;xrd:Type&gt; child element of the &lt;xrd:Service&gt; element 
+	  in the XRDS discovery document.
+	</t>
+
+	<figure>
+	  <artwork>
+&lt;Type&gt;http://specs.openid.net/extensions/ui/1.0/lang-pref&lt;/Type&gt;
+	  </artwork>
+	</figure>
+
+	<t>
+	  OpenID Providers supporting the popup functionality SHOULD define
+	  http://specs.openid.net/extensions/ui/1.0/mode/popup as a  &lt;xrd:Type&gt; child element 
+	  of the &lt;xrd:Service&gt; element in the 
+	  XRDS discovery document.
+	</t>
+	<figure>
+	  <artwork>
+&lt;Type&gt;http://specs.openid.net/extensions/ui/1.0/mode/popup&lt;/Type&gt;
+	  </artwork>
+	</figure>
+
+      </section>
+    <section title="Considerations">
+      <t>
+	OpenID Providers SHOULD use HTTPS for all their authentication screens, and educate
+	their users to always check their browser's address bar before entering their 
+	credentials. OPs SHOULD implement Javascript framebusting code to prevent their UI from
+	being framed.
+      </t>
+      <t>
+	Credential verification and approval screens SHOULD always be in an independent browser
+	window to protect the user's credentials and approval from clickjacking exploits.
+      </t>
+    </section>
+    
+    <section title="Acknowledgements">
+      <t>
+	Allen Tom (atom@yahoo-inc.com)
+      </t>
+      <t>
+	Breno de Medeiros (breno@google.com)
+      </t>
+      <t>
+	Brian Ellin (brian@janrain.com)
+      </t>
+      <t>
+	Chris Messina (chris@citizenagency.com)
+      </t>
+      <t>
+	David Recordon (david@sixapart.com)
+      </t>
+    </section>
+
+  </middle>
+    
+  <back>
+    <references title="References">
+
+      <reference anchor="BCP 47">
+	<front>
+          <title>Tags for Identifying Languages</title>
+          <author initials="A.P." surname="Phillips" fullname="Addison Phillips">
+	    <organization></organization>
+          </author>
+          <author initials="M.D." surname="Davis" fullname="Mark Davis">
+	    <organization>Google</organization>
+          </author>
+        </front>
+        <seriesInfo name="BCP" value="47" />
+      </reference>
+
+
+      <reference anchor="OpenID 2.0">
+        <front>
+          <title>OpenID 2.0</title>
+          <author initials="" surname="OpenID 2.0 Workgroup" fullname="OpenID 2.0 Core Workgroup">
+            <organization />
+          </author>
+        </front>
+        <format type="HTML" target="http://openid.net" />
+      </reference>
+
+
+      <reference anchor="OpenID Attribute Exchange">
+        <front>
+          <title>OpenID Attribute Exchange 1.0</title>
+
+          <author initials="D.H." surname="Hardt" fullname="Dick Hardt">
+            <organization>Sxip Identity</organization>
+          </author>
+
+          <author initials="J.B." surname="Bufu" fullname="Johnny Bufu">
+            <organization>Sxip Identity</organization>
+          </author>
+
+          <author initials="J.H." surname="Hoyt" fullname="Josh Hoyt">
+            <organization>JanRain</organization>
+          </author>
+        </front>
+        <format type="HTML" target="http://openid.net/specs/openid-attribute-exchange-1_0.html" />
+      </reference>
+
+      <reference anchor="Language Preference Attribute">
+        <front>
+          <title>Language Preference Attribute</title>
+          <author initials="" surname="axschema.org" fullname="axschema.org">
+            <organization />
+          </author>
+        </front>
+        <format type="HTML" target="http://axschema.org/pref/language" />
+      </reference>
+
+
+
+
+      <reference anchor="RFC2119">
+        <front>
+          <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+          <author initials="B.S" surname="Bradner" fullname="Scott Bradner">
+            <organization>Alis Technologies</organization>
+          </author>
+        </front>
+        <seriesInfo name="RFC" value="2119" />
+      </reference>
+
+    </references>
+  </back>
+</rfc>
